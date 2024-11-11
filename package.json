@@ -1,0 +1,22 @@
+{
+  "name": "virtronlab",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./src/output.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "tailwindcss": "^3.4.14"
+  },
+  "dependencies": {
+    "bip39": "^3.1.0",
+    "bs58": "^6.0.0",
+    "express": "^4.21.1",
+    "tweetnacl": "^1.0.3"
+  }
+}
