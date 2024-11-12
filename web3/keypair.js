@@ -2,11 +2,13 @@ import bs58 from 'bs58';
 import nacl from 'tweetnacl';
 import bip39 from 'bip39';
 import VRTAccount from './VRTAccount.js';
+import StakeAccount from './stakeAccount.js';
 
 class Keypair {
   constructor(publicKey, privateKey) {
     this.publicKey = publicKey;
     this.privateKey = privateKey;
+    this.stakeAccounts = [];  // Array to hold multiple stake accounts
     this._vrtAccount = new VRTAccount(publicKey); // Internal VRTAccount instance
   }
 
@@ -47,6 +49,39 @@ class Keypair {
     console.log(`Current balance for ${this.publicKey}: ${balance} VRT`);
     return balance;
   }
+
+  // Create a new stake account and move VRT into it
+  createStakeAccount(amount, lockUntil = null) {
+    if (this._vrtAccount.balance < amount) {
+      throw new Error("Insufficient wallet balance for staking.");
+    }
+
+    // Transfer from wallet balance to new stake account
+    this._vrtAccount._decreaseBalance(amount);  
+    const stakeAccount = new StakeAccount(this.publicKey, amount, lockUntil);
+    this.stakeAccounts.push(stakeAccount);
+
+    console.log(`Created StakeAccount ${stakeAccount.accountAddress} with ${amount} VRT.`);
+    return stakeAccount;
+  }  
+
+  // Authorize (retrieve) a specific stake account by address
+  getStakeAccount(accountAddress) {
+    return this.stakeAccounts.find(acc => acc.accountAddress === accountAddress);
+  }
+
+  // Move VRT back to wallet after cool-down
+  withdrawFromStakeAccount(accountAddress, amount) {
+    const stakeAccount = this.getStakeAccount(accountAddress);
+    if (!stakeAccount) {
+      throw new Error("Stake account not found.");
+    }
+
+    // Withdraw from stake account and add back to main wallet after cool-down
+    const withdrawnAmount = stakeAccount.withdraw(amount);
+    this._vrtAccount._increaseBalance(withdrawnAmount);
+    console.log(`Withdrew ${withdrawnAmount} VRT from StakeAccount ${accountAddress} back to main wallet.`);
+  }  
 
   // Transfer method
   transfer(amountInVRT, recipientKeypair) {
