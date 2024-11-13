@@ -2,7 +2,6 @@ import { Server } from 'rpc-websockets';
 import bs58 from 'bs58';
 import nacl from 'tweetnacl';
 
-
 const peers = new Map(); // Use a Map for storing peer metadata
 
 const bootstrapServer = new Server({
@@ -56,14 +55,26 @@ bootstrapServer.register('getKnownPeers', () => {
     return Array.from(peers.entries()).map(([key, value]) => ({ publicKey: key, ...value }));
 });
 
-// Update lastSeen for active peers to manage peer activity status
-bootstrapServer.on('connection', (client) => {
-    console.log('New client connected');
-    
-    client.on('close', () => {
-        // Handle disconnection if needed (not removing for simplicity, but can be modified to remove inactive peers)
-        console.log('Client disconnected');
-    });
+// Ping-Pong method to verify peer activity
+bootstrapServer.register('pingPong', async (params) => {
+    const { publicKey, message } = params;
+
+    if (!publicKey) {
+        console.error('Ping received without publicKey');
+        return { success: false, error: 'publicKey missing in ping request' };
+    }
+
+    console.log('Received ping from peer:', publicKey);
+
+    // Update the lastSeen timestamp to the current time
+    if (peers.has(publicKey)) {
+        const peer = peers.get(publicKey);
+        peer.lastSeen = Date.now();
+        peers.set(publicKey, peer);
+    }
+
+    // Respond with a pong message
+    return { message: 'pong' };
 });
 
 // Periodically clean up peers with outdated metadata

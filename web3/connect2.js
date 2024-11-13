@@ -35,7 +35,7 @@ async function main() {
       signature: signature,        // Signed message
       message: message,            // Message to be registered
       ip: '127.0.0.1',             // The local IP or dynamically discovered IP
-      port: 8084,                  // The port for this peer
+      port: 8085,                  // The port for this peer
       role: 'validator',           // Default role (optional, can be customized)
       slotIdentifier: 'slot1'      // Slot identifier (optional)
     });
